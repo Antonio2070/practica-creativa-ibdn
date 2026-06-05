@@ -25,9 +25,8 @@ ENV JAVA_HOME=/opt/java/openjdk
 ENV PROJECT_HOME=/app
 ENV KAFKA_BOOTSTRAP_SERVERS=kafka:29092
 
-
-COPY models ./models
-COPY flight_prediction ./flight_prediction
+COPY models /app/models
+COPY flight_prediction /app/flight_prediction
 COPY resources /app/resources
 COPY data /app/data
 
@@ -38,7 +37,8 @@ CMD JAR=$(find target/scala-2.13 -name "*.jar" | head -n 1) && \
     spark-submit \
       --class es.upm.dit.ging.predictor.MakePrediction \
       --master spark://spark-master:7077 \
-      --packages org.apache.spark:spark-sql-kafka-0-10_2.13:4.1.1,com.datastax.spark:spark-cassandra-connector_2.13:3.5.1 \      $JAR
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.13:4.1.1,com.datastax.spark:spark-cassandra-connector_2.13:3.5.1 \
+      "$JAR"
 
       ### KAFKA RESPONSE ###
       ### --packages org.mongodb.spark:mongo-spark-connector_2.13:10.4.1,org.apache.spark:spark-sql-kafka-0-10_2.13:4.1.1,com.datastax.spark:spark-cassandra-connector_2.13:3.5.1

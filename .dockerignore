@@ -1,9 +1,25 @@
-data
+# Git
 .git
+.gitignore
+
+# Python
+env
+venv
+.venv
+__pycache__
+*.pyc
+
+# Logs
+*.log
+
+# Carpetas descargadas pesadas
+spark-4.1.1-bin-hadoop3
+kafka_2.13-4.2.0
+
+# Otros artefactos locales pesados o temporales
 spark
 hadoop
 elasticsearch
-kafka
 mongodb
 mongo-hadoop
 spark-warehouse
@@ -11,3 +27,12 @@ tmp
 zeppelin
 elasticsearch-hadoop
 lib
+
+# Flags locales
+.cassandra_ready
+.iceberg_ready
+resources/airflow/.models_lakehouse_ready
+
+# IDE
+.vscode
+.idea

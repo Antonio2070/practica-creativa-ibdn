@@ -370,7 +370,7 @@ services:
         echo 'Esperando a cassandra-init...';
         sleep 5;
       done;
-      while [ ! -f /app/resources/airflow/.models_lakehouse_ready ]; do
+      while [ ! -f /app/.models_lakehouse_ready ]; do
         echo 'Esperando a model lakehouse...';
         sleep 5;
       done;
@@ -403,7 +403,7 @@ services:
         echo 'Esperando a cassandra-init...';
         sleep 5;
       done;
-      while [ ! -f /app/resources/airflow/.models_lakehouse_ready ]; do
+      while [ ! -f /app/.models_lakehouse_ready ]; do
         echo 'Esperando a model lakehouse...';
         sleep 5;
       done;

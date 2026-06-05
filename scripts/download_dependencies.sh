@@ -5,13 +5,13 @@ set -e
 SPARK_VERSION="4.1.1"
 SPARK_PACKAGE="spark-${SPARK_VERSION}-bin-hadoop3"
 SPARK_TGZ="${SPARK_PACKAGE}.tgz"
-SPARK_URL="https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/${SPARK_TGZ}"
+SPARK_URL="https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/${SPARK_TGZ}"
 
 KAFKA_VERSION="4.2.0"
 KAFKA_SCALA_VERSION="2.13"
 KAFKA_PACKAGE="kafka_${KAFKA_SCALA_VERSION}-${KAFKA_VERSION}"
 KAFKA_TGZ="${KAFKA_PACKAGE}.tgz"
-KAFKA_URL="https://dlcdn.apache.org/kafka/${KAFKA_VERSION}/${KAFKA_TGZ}"
+KAFKA_URL="https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/${KAFKA_TGZ}"
 
 echo "======================================"
 echo " DESCARGANDO DEPENDENCIAS"

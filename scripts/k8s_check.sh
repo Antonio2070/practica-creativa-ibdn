@@ -71,10 +71,28 @@ SPARK_JSON=$(kubectl exec -n "$NS" deploy/spark-predictor -- curl -s http://spar
 echo "$SPARK_JSON" | grep -q '"aliveworkers" : 2' \
   && ok "Spark tiene 2 workers vivos" \
   || fail "Spark no tiene 2 workers vivos"
+echo ""
+echo "Esperando aplicación Spark Streaming..."
 
-echo "$SPARK_JSON" | grep -q "FlightDelayStreamingPrediction" \
-  && ok "FlightDelayStreamingPrediction está registrada" \
-  || fail "FlightDelayStreamingPrediction no aparece en Spark"
+FOUND_APP="false"
+
+for i in {1..60}; do
+  SPARK_JSON=$(kubectl exec -n "$NS" deploy/spark-predictor -- curl -s http://spark-master:8081/json/)
+
+  if echo "$SPARK_JSON" | grep -q "FlightDelayStreamingPrediction"; then
+    FOUND_APP="true"
+    break
+  fi
+
+  echo "⏳ Esperando FlightDelayStreamingPrediction... intento $i/60"
+  sleep 5
+done
+
+if [ "$FOUND_APP" = "true" ]; then
+  ok "FlightDelayStreamingPrediction está registrada"
+else
+  fail "FlightDelayStreamingPrediction no aparece en Spark"
+fi
 
 echo ""
 echo "Comprobando MLflow..."

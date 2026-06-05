@@ -5,7 +5,7 @@ echo "======================================"
 echo " ARRANCANDO STACK KUBERNETES IBDN"
 echo "======================================"
 
-minikube status >/dev/null 2>&1 || minikube start
+minikube status >/dev/null 2>&1 || minikube start --driver=docker
 
 eval $(minikube docker-env)
 

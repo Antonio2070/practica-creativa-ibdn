@@ -28,6 +28,8 @@ ENV KAFKA_BOOTSTRAP_SERVERS=kafka:29092
 
 COPY models ./models
 COPY flight_prediction ./flight_prediction
+COPY resources /app/resources
+COPY data /app/data
 
 WORKDIR /app/flight_prediction
 

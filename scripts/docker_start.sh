@@ -16,6 +16,8 @@ else
     echo "JAR ya compilado."
 fi
 
+chmod -R 777 .
+
 docker-compose up -d --build
 
 echo ""

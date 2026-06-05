@@ -8,10 +8,7 @@ import iso8601
 
 PROJECT_HOME = os.getenv("PROJECT_HOME")
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 7a1c2f7 (cambios mas inutiles)
 default_args = {
   'owner': 'airflow',
   'depends_on_past': False,

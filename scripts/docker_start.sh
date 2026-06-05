@@ -5,6 +5,8 @@ echo "======================================"
 echo " ARRANCANDO STACK DOCKER IBDN"
 echo "======================================"
 
+./scripts/download_dependencies.sh
+
 docker-compose up -d --build
 
 echo ""

@@ -9,6 +9,8 @@ minikube status >/dev/null 2>&1 || minikube start
 
 eval $(minikube docker-env)
 
+./scripts/download_dependencies.sh
+
 echo "Construyendo imágenes..."
 docker build -t practica-spark:latest -f Dockerfile.spark .
 docker build -t practica-web:latest -f Dockerfile.web .

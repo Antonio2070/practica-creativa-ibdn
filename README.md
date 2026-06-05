@@ -189,41 +189,7 @@ practica_creativa/
 
 ---
 
-## 7. Ficheros necesarios para la entrega
-
-Para ejecutar la práctica son necesarios:
-
-```text
-data/
-flight_prediction/
-models/
-resources/
-k8s/
-scripts/
-docker-compose.yml
-Dockerfile.spark
-Dockerfile.web
-Dockerfile.airflow
-requirements.txt
-README.md
-```
-
-No es necesario entregar:
-
-```text
-env/
-flight_prediction/target/
-kafka_2.13-4.2.0/
-spark-4.1.1-bin-hadoop3/
-*.log
-.git/
-```
-
-Estos elementos son dependencias descargadas, entornos virtuales o artefactos generados.
-
----
-
-## 8. Requisitos
+## 7. Requisitos
 
 ### Docker
 
@@ -235,6 +201,38 @@ Estos elementos son dependencias descargadas, entornos virtuales o artefactos ge
 * Minikube
 * kubectl
 * Docker
+
+---
+## 8. Preparación del entorno Python
+
+Antes de utilizar los scripts auxiliares del proyecto, se recomienda crear un entorno virtual de Python e instalar las dependencias incluidas en `requirements.txt`.
+
+### Crear entorno virtual
+
+```bash
+python3 -m venv env
+```
+
+### Activar entorno virtual
+
+Linux:
+
+```bash
+source env/bin/activate
+```
+
+### Instalar dependencias
+
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### Desactivar entorno virtual
+
+```bash
+deactivate
+```
 
 ---
 

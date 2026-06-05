@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-worker
+  namespace: practica-ibdn
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spark-worker
+  template:
+    metadata:
+      labels:
+        app: spark-worker
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: spark-worker
+          image: practica-spark:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /opt/spark/bin/spark-class
+            - org.apache.spark.deploy.worker.Worker
+          args:
+            - spark://spark-master:7077
+            - --cores
+            - "1"
+            - --memory
+            - "1g"
+            - --webui-port
+            - "8082"
+          ports:
+            - containerPort: 8082
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1"

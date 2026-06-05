@@ -1,0 +1,15 @@
+FROM apache/airflow:2.8.4-python3.10
+
+USER root
+
+RUN apt-get update && apt-get install -y \
+    openjdk-17-jre-headless \
+    && rm -rf /var/lib/apt/lists/*
+
+USER airflow
+
+RUN pip install --no-cache-dir \
+    mlflow==2.16.2 \
+    numpy \
+    iso8601 \
+    email-validator>=2.0

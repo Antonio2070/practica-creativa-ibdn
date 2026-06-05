@@ -2,6 +2,10 @@ import sys, os, re
 import pymongo
 import datetime, iso8601
 
+from cassandra.cluster import Cluster #Cassandra
+
+_cassandra_session = None #Cassandra
+
 def process_search(results):
   """Process elasticsearch hits and return flights records"""
   records = []
@@ -31,6 +35,39 @@ def strip_place(url):
     return url
   return p
 
+###########################Cassandra###########################
+def get_cassandra_session():
+    global _cassandra_session
+
+    if _cassandra_session is None:
+        cassandra_host = os.environ.get("CASSANDRA_HOST", "cassandra")
+        cluster = Cluster([cassandra_host])
+        _cassandra_session = cluster.connect("agile_data_science")
+
+    return _cassandra_session
+
+def get_flight_distance(client, origin, dest):
+    session = get_cassandra_session()
+
+    row = session.execute(
+        """
+        SELECT distance
+        FROM origin_dest_distances
+        WHERE origin = %s AND dest = %s
+        """,
+        (origin, dest)
+    ).one()
+
+    if row is None:
+        raise ValueError(f"No se encontró distancia en Cassandra para {origin}-{dest}")
+
+    return row.distance
+
+###########################Cassandra###########################
+
+
+
+''' ###########################Mongo###########################
 def get_flight_distance(client, origin, dest):
   """Get the distance between a pair of airport codes"""
   query = {
@@ -39,6 +76,8 @@ def get_flight_distance(client, origin, dest):
   }
   record = client.agile_data_science.origin_dest_distances.find_one(query)
   return record["Distance"]
+''' ###########################Mongo###########################
+
 
 def get_regression_date_args(iso_date):
   """Given an ISO Date, return the day of year, day of month, day of week as the API expects them."""

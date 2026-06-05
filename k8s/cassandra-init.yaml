@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cassandra-init
+  namespace: practica-ibdn
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: cassandra-init
+    spec:
+      restartPolicy: OnFailure
+      enableServiceLinks: false
+      containers:
+        - name: cassandra-init
+          image: python:3.10-slim
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              pip install cassandra-driver &&
+              python /app/resources/import_distances_cassandra.py
+          volumeMounts:
+            - name: project-volume
+              mountPath: /app
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      volumes:
+        - name: project-volume
+          hostPath:
+            path: /home/docker/practica_creativa
+            type: Directory

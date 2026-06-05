@@ -1,34 +1,28 @@
-.DS_Store
-.ipynb_checkpoints
-mongodb
-spark
-hadoop
-mongo-hadoop
-lib/mongo*
-lib/pymongo_spark.py
-elasticsearch
-elasticsearch-hadoop
-lib
-ch03/static
-ch06/web/static
+# Python
+env/
+__pycache__/
 *.pyc
-tmp
-.idea
-kafka
-zeppelin
-ch05/scrape_faa.py
-models
-.vagrant
-*.pem
-.reservation_id
-.ec2_hostname
-.ec2_deep_hostname
-.deep_reservation_id
-deep/data
-.vscode
-ghostdriver.log
-cassandra
-janusgraph
-deep
-data/origin_dest_distances.jsonl
-data/simple_flight_delay_features.jsonl.bz2
+
+# Spark
+flight_prediction/target/
+
+# Logs
+*.log
+
+# Kafka descargado
+kafka_2.13-4.2.0/
+kafka_2.13-4.2.0.tgz
+
+# Spark descargado
+spark-4.1.1-bin-hadoop3/
+spark-4.1.1-bin-hadoop3.tgz
+
+# IDE
+.idea/
+.vscode/
+
+# Minikube
+.metadata/
+
+# OS
+.DS_Store

@@ -1,0 +1,122 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-predictor
+  namespace: practica-ibdn
+spec:
+  selector:
+    app: spark-predictor
+  ports:
+    - name: driver
+      port: 7078
+      targetPort: 7078
+    - name: blockmanager
+      port: 7079
+      targetPort: 7079
+    - name: ui
+      port: 4040
+      targetPort: 4040
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-predictor
+  namespace: practica-ibdn
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark-predictor
+  template:
+    metadata:
+      labels:
+        app: spark-predictor
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: spark-predictor
+          image: practica-spark:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              value: admin
+            - name: AWS_SECRET_ACCESS_KEY
+              value: password123
+            - name: AWS_REGION
+              value: us-east-1
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: kafka:29092
+            - name: CASSANDRA_HOST
+              value: cassandra
+            - name: SPARK_MASTER_URL
+              value: spark://spark-master:7077
+            - name: SPARK_DRIVER_HOST
+              value: spark-predictor
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              echo 'Esperando a Kafka, Cassandra, MinIO y Spark...';
+
+              until timeout 3 bash -c '</dev/tcp/kafka/29092' >/dev/null 2>&1; do
+                echo 'Esperando a Kafka...';
+                sleep 5;
+              done;
+
+              until python3 - <<'PY'
+              import socket
+              s = socket.socket()
+              s.settimeout(3)
+              s.connect(("cassandra", 9042))
+              s.close()
+              PY
+              do
+                echo 'Esperando a Cassandra...';
+                sleep 5;
+              done;
+
+              until curl -sf http://minio:9000/minio/health/live >/dev/null 2>&1; do
+                echo 'Esperando a MinIO...';
+                sleep 5;
+              done;
+
+              until curl -sf http://spark-master:8081 >/dev/null 2>&1; do
+                echo 'Esperando a Spark Master...';
+                sleep 5;
+              done;
+
+              sleep 15;
+
+              cd /app/flight_prediction;
+
+              JAR=$(find target/scala-2.13 -name "*.jar" | head -n 1);
+              echo "Usando JAR: $JAR";
+
+              spark-submit \
+                --class es.upm.dit.ging.predictor.MakePrediction \
+                --master spark://spark-master:7077 \
+                --deploy-mode client \
+                --conf spark.driver.host=spark-predictor \
+                --conf spark.driver.bindAddress=0.0.0.0 \
+                --conf spark.driver.port=7078 \
+                --conf spark.blockManager.port=7079 \
+                --conf spark.ui.port=4040 \
+                --conf spark.executor.instances=2 \
+                --conf spark.executor.cores=1 \
+                --conf spark.executor.memory=1g \
+                --total-executor-cores 2 \
+                --packages org.apache.spark:spark-sql-kafka-0-10_2.13:4.1.1,com.datastax.spark:spark-cassandra-connector_2.13:3.5.1 \
+                "$JAR"
+          ports:
+            - containerPort: 7078
+            - containerPort: 7079
+            - containerPort: 4040
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1"

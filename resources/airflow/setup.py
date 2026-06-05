@@ -25,9 +25,22 @@ training_dag = DAG(
 
 # We use the same two commands for all our PySpark tasks
 pyspark_bash_command = """
-spark-submit --master {{ params.master }} \
-  {{ params.base_path }}/{{ params.filename }} \
-  {{ params.base_path }}
+if [ -f /app/resources/airflow/.models_lakehouse_ready ]; then
+  echo 'Modelos ya entrenados. Saltando entrenamiento Airflow.';
+else
+  /app/spark-4.1.1-bin-hadoop3/bin/spark-submit \
+    --master spark://spark-master:7077 \
+    --driver-memory 4g \
+    --conf spark.driver.host=airflow \
+    --conf spark.driver.bindAddress=0.0.0.0 \
+    --conf spark.executor.instances=2 \
+    --conf spark.executor.cores=1 \
+    --conf spark.executor.memory=1g \
+    --conf spark.driver.extraJavaOptions=-Djava.net.preferIPv4Stack=true \
+    --packages org.apache.iceberg:iceberg-spark-runtime-4.0_2.13:1.10.1,org.apache.hadoop:hadoop-aws:3.4.2 \
+    /app/resources/train_spark_mllib_model_lakehouse.py \
+  && touch /app/resources/airflow/.models_lakehouse_ready;
+fi
 """
 pyspark_date_bash_command = """
 spark-submit --master {{ params.master }} \
@@ -53,13 +66,8 @@ extract_features_operator = BashOperator(
 
 # Train and persist the classifier model
 train_classifier_model_operator = BashOperator(
-  task_id = "pyspark_train_classifier_model",
-  bash_command = pyspark_bash_command,
-  params = {
-    "master": "local[8]",
-    "filename": "resources/train_spark_mllib_model.py",
-    "base_path": "{}/".format(PROJECT_HOME)
-  },
+  task_id="pyspark_train_classifier_model_lakehouse",
+  bash_command=pyspark_bash_command,
   dag=training_dag
 )
 

@@ -2,6 +2,10 @@ import sys, os, re
 from flask import Flask, render_template, request
 from pymongo import MongoClient
 from bson import json_util
+import threading
+from kafka import KafkaConsumer
+from flask_socketio import SocketIO
+
 
 # Configuration details
 import config
@@ -12,7 +16,14 @@ import predict_utils
 # Set up Flask, Mongo and Elasticsearch
 app = Flask(__name__)
 
-client = MongoClient()
+#### KAFKA RESPONSE ####
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+
+RESPONSE_TOPIC = "flight-delay-ml-response"
+prediction_cache = {}
+#### KAFKA RESPONSE ####
+
+client = MongoClient(os.environ.get("MONGO_URI", "mongodb://localhost:27017/"))
 
 from pyelasticsearch import ElasticSearch
 elastic = ElasticSearch(config.ELASTIC_URL)
@@ -23,9 +34,39 @@ import json
 import iso8601
 import datetime
 
+def consume_prediction_responses():
+  consumer = KafkaConsumer(
+    RESPONSE_TOPIC,
+    bootstrap_servers=os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "kafka:29092"),
+    auto_offset_reset="latest",
+    enable_auto_commit=True,
+    group_id="flask-response-consumer",
+    value_deserializer=lambda m: json.loads(m.decode("utf-8"))
+  )
+
+  for message in consumer:
+    prediction = message.value
+    unique_id = prediction.get("UUID") or prediction.get("uuid")
+
+    if unique_id:
+      prediction_cache[unique_id] = prediction
+      socketio.emit("prediction_response", {
+        "id": unique_id,
+        "prediction": prediction
+      })
+
+threading.Thread(
+  target=consume_prediction_responses,
+  daemon=True
+).start()
+
+
 # Setup Kafka
 from kafka import KafkaProducer
-producer = KafkaProducer(bootstrap_servers=['localhost:9092'],api_version=(0,10))
+producer = KafkaProducer(
+    bootstrap_servers=[os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "kafka:29092")],
+    api_version_auto_timeout_ms=30000
+)
 PREDICTION_TOPIC = 'flight-delay-ml-request'
 
 import uuid
@@ -209,11 +250,19 @@ def airline(carrier_code):
 
 # Controller: Fetch an airplane entity page
 @app.route("/")
+def index():
+  return render_template('flight_delays_predict_kafka.html', form_config=[
+    {'field': 'DepDelay', 'label': 'Departure Delay', 'value': 5},
+    {'field': 'Carrier', 'value': 'AA'},
+    {'field': 'FlightDate', 'label': 'Date', 'value': '2016-12-25'},
+    {'field': 'Origin', 'value': 'ATL'},
+    {'field': 'Dest', 'label': 'Destination', 'value': 'SFO'}
+  ])
+
 @app.route("/airlines")
 @app.route("/airlines/")
 def airlines():
-  airlines = client.agile_data_science.airplanes_per_carrier.find()
-  return render_template('all_airlines.html', airlines=airlines)
+  return index()
 
 @app.route("/flights/search")
 @app.route("/flights/search/")
@@ -511,19 +560,14 @@ def flight_delays_page_kafka():
 
 @app.route("/flights/delays/predict/classify_realtime/response/<unique_id>")
 def classify_flight_delays_realtime_response(unique_id):
-  """Serves predictions to polling requestors"""
-  
-  prediction = client.agile_data_science.flight_delay_ml_response.find_one(
-    {
-      "UUID": unique_id
-    }
-  )
-  
+  prediction = prediction_cache.get(unique_id)
+
   response = {"status": "WAIT", "id": unique_id}
+
   if prediction:
     response["status"] = "OK"
     response["prediction"] = prediction
-  
+
   return json_util.dumps(response)
 
 def shutdown_server():
@@ -538,8 +582,11 @@ def shutdown():
   return 'Server shutting down...'
 
 if __name__ == "__main__":
-    app.run(
+    socketio.run(
+    app,
     debug=True,
-    host='0.0.0.0',
-    port='5001'
+    host="0.0.0.0",
+    port=5001,
+    use_reloader=False,
+    allow_unsafe_werkzeug=True
   )

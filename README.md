@@ -544,35 +544,185 @@ Una ejecución correcta implica:
 
 ---
 
-## 18. Mejoras implementadas
+# 18. Requisitos de la Asignación Completados
 
-### Despliegue
+## Requisitos Obligatorios (5/5)
 
-* Dockerización completa.
-* Despliegue Kubernetes con Minikube.
-* Scripts de arranque, parada, comprobación y reentrenamiento.
+### ✅ 1. Datos de entrenamiento almacenados en S3/MinIO utilizando Iceberg Lakehouse
 
-### Persistencia
+Implementado.
 
-* Cassandra para distancias y predicciones.
-* MinIO como almacenamiento compatible con S3.
-* Iceberg como Lakehouse.
-
-### Observabilidad
-
-* Spark UI.
-* MLflow.
-* Logs mediante Docker y Kubernetes.
-* Scripts de validación automática.
-
-### Escalabilidad
-
-* Spark Master y Spark Workers.
-* Servicios separados en Docker y Kubernetes.
-* Posibilidad de escalar workers en Kubernetes.
+* MinIO desplegado como almacenamiento de objetos compatible con S3.
+* Catálogo Iceberg configurado sobre MinIO.
+* Conjunto de datos de entrenamiento importado en tablas Iceberg.
+* Inicialización automática disponible mediante scripts de despliegue.
 
 ---
 
+### ✅ 2. Distancias de vuelo almacenadas y leídas desde Cassandra
+
+Implementado.
+
+Cambios realizados:
+
+* Las distancias entre origen y destino fueron importadas a Cassandra.
+* Se eliminó la dependencia de MongoDB en el flujo de consulta de distancias.
+* La aplicación Flask obtiene las distancias directamente desde Cassandra.
+
+Tabla utilizada:
+
+```text
+agile_data_science.origin_dest_distances
+```
+
+---
+
+### ✅ 3. Predicciones escritas en Kafka y presentadas mediante WebSockets
+
+Implementado.
+
+Flujo de trabajo:
+
+```text
+Flask
+ → Topic de solicitud en Kafka
+ → Spark Streaming
+ → Topic de respuesta en Kafka
+ → WebSocket de Flask
+ → Interfaz Web
+```
+
+Además:
+
+* Las predicciones se almacenan de forma persistente en Cassandra.
+* Las respuestas en tiempo real se consumen desde Kafka.
+* Los resultados se muestran sin necesidad de recargar la página.
+
+Tabla utilizada:
+
+```text
+agile_data_science.flight_delay_ml_response
+```
+
+---
+
+### ✅ 4. El entrenamiento lee desde el Lakehouse y almacena los modelos en el Lakehouse
+
+Implementado.
+
+Flujo de entrenamiento:
+
+```text
+Iceberg Lakehouse
+ → Entrenamiento con Spark ML
+ → MinIO
+ → MLflow
+```
+
+Los modelos pueden reentrenarse mediante:
+
+```bash
+./scripts/docker_retrain_models.sh
+```
+
+o
+
+```bash
+./scripts/k8s_retrain_models.sh
+```
+
+---
+
+### ✅ 5. Despliegue completo con Docker
+
+Implementado.
+
+Servicios contenedorizados:
+
+* Kafka
+* Cassandra
+* MinIO
+* MLflow
+* Airflow
+* Spark Master
+* Spark Workers
+* Spark Predictor
+* Aplicación Web Flask
+
+Despliegue completo:
+
+```bash
+./scripts/docker_start.sh
+```
+
+---
+
+## Despliegue en Kubernetes (3/3)
+
+### ✅ Despliegue completo en Kubernetes con todas las modificaciones solicitadas
+
+Implementado.
+
+Servicios desplegados:
+
+* Kafka
+* Cassandra
+* MinIO
+* MLflow
+* Spark Master
+* Spark Workers
+* Spark Predictor
+* Aplicación Web Flask
+
+Tareas de inicialización:
+
+* Inicialización de Cassandra
+* Inicialización de MinIO
+
+Script de validación:
+
+```bash
+./scripts/k8s_check.sh
+```
+
+---
+
+## Mejoras Adicionales
+
+### ✅ Entrenamiento con Airflow + MLflow sobre un clúster Spark
+
+Implementado.
+
+* Un DAG de Airflow ejecuta el entrenamiento en Spark.
+* MLflow almacena experimentos y ejecuciones.
+* El entrenamiento puede repetirse bajo demanda.
+
+---
+
+### ⏳ Despliegue en Google Cloud
+
+No implementado.
+
+---
+
+### ✅ Mejoras en despliegue, observabilidad y automatización
+
+Implementado.
+
+Principales mejoras:
+
+* Scripts de despliegue automatizados.
+* Scripts de validación automatizados.
+* Scripts de reentrenamiento automatizados.
+* Integración con Spark UI.
+* Integración con MLflow.
+* Tareas de inicialización de MinIO.
+* Tareas de inicialización de Cassandra.
+* Compatibilidad con Docker y Kubernetes.
+* Flujo de validación de extremo a extremo (end-to-end).
+* Repositorio GitHub con despliegue reproducible.
+
+---
 ## 19. Autor
 
 Antonio

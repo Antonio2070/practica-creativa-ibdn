@@ -99,7 +99,7 @@ wait_file() {
 }
 
 wait_models_ready() {
-  FILE="resources/airflow/.models_lakehouse_ready"
+  FILE=".models_lakehouse_ready"
   DAG_ID="agile_data_science_batch_prediction_model_training"
 
   while true; do

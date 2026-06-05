@@ -25,7 +25,7 @@ training_dag = DAG(
 
 # We use the same two commands for all our PySpark tasks
 pyspark_bash_command = """
-if [ -f /app/resources/airflow/.models_lakehouse_ready ]; then
+if [ -f /app/.models_lakehouse_ready ]; then
   echo 'Modelos ya entrenados. Saltando entrenamiento Airflow.';
 else
   /app/spark-4.1.1-bin-hadoop3/bin/spark-submit \
@@ -39,7 +39,7 @@ else
     --conf spark.driver.extraJavaOptions=-Djava.net.preferIPv4Stack=true \
     --packages org.apache.iceberg:iceberg-spark-runtime-4.0_2.13:1.10.1,org.apache.hadoop:hadoop-aws:3.4.2 \
     /app/resources/train_spark_mllib_model_lakehouse.py \
-  && touch /app/resources/airflow/.models_lakehouse_ready;
+  && touch /app/.models_lakehouse_ready;
 fi
 """
 pyspark_date_bash_command = """

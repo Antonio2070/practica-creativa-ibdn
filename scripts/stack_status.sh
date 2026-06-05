@@ -28,7 +28,7 @@ check_file () {
 
 check_file ".cassandra_ready"
 check_file ".iceberg_ready"
-check_file "resources/airflow/.models_lakehouse_ready"
+check_file ".models_lakehouse_ready"
 
 echo ""
 echo "--------------------------------------"

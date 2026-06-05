@@ -334,7 +334,7 @@ services:
       airflow webserver --port 8080 --daemon;
       sleep 20;
       airflow dags unpause agile_data_science_batch_prediction_model_training || true;
-      if [ ! -f /app/resources/airflow/.models_lakehouse_ready ]; then
+      if [ ! -f /app/.models_lakehouse_ready ]; then
         airflow dags trigger agile_data_science_batch_prediction_model_training || true;
       fi;
       airflow scheduler

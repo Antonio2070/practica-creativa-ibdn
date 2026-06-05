@@ -3,7 +3,7 @@
 set -e
 
 DAG_ID="agile_data_science_batch_prediction_model_training"
-READY_FILE="resources/airflow/.models_lakehouse_ready"
+READY_FILE=".models_lakehouse_ready"
 
 echo "======================================"
 echo " REENTRENANDO MODELO CON AIRFLOW"

@@ -191,19 +191,16 @@ services:
     command: >
       sh -c "
       echo 'Inicializando Lakehouse con Iceberg...';
-      if [ -f /app/.iceberg_ready ]; then
-        echo 'Lakehouse ya inicializado. Saltando importación.';
+      rm -f /app/.iceberg_ready;
+      spark-submit --packages org.apache.iceberg:iceberg-spark-runtime-4.0_2.13:1.10.1,org.apache.hadoop:hadoop-aws:3.4.2 /app/resources/import_training_data_iceberg.py;
+      RESULT=$$?;
+      if [ $$RESULT -eq 0 ]; then
+        touch /app/.iceberg_ready;
+        echo 'Lakehouse inicializado correctamente.';
       else
-        spark-submit --packages org.apache.iceberg:iceberg-spark-runtime-4.0_2.13:1.10.1,org.apache.hadoop:hadoop-aws:3.4.2 /app/resources/import_training_data_iceberg.py;
-        RESULT=$$?;
-        if [ $$RESULT -eq 0 ]; then
-          touch /app/.iceberg_ready;
-          echo 'Lakehouse inicializado correctamente.';
-        else
-          echo 'ERROR: la importación a Iceberg ha fallado.';
-          exit $$RESULT;
-        fi;
-      fi
+        echo 'ERROR: la importación a Iceberg ha fallado.';
+        exit $$RESULT;
+      fi;
       "
 
   model-training:
@@ -226,13 +223,13 @@ services:
     command: >
       sh -c "
       echo 'Entrenando modelo desde Lakehouse...';
-      if [ -f /app/.models_lakehouse_ready ]; then
+      if [ -f /app/resources/airflow/.models_lakehouse_ready ]; then
         echo 'Modelos ya entrenados en Lakehouse. Saltando entrenamiento.';
       else
         spark-submit --driver-memory 4g --conf spark.driver.extraJavaOptions=-Djava.net.preferIPv4Stack=true --packages org.apache.iceberg:iceberg-spark-runtime-4.0_2.13:1.10.1,org.apache.hadoop:hadoop-aws:3.4.2 /app/resources/train_spark_mllib_model_lakehouse.py;
         RESULT=$$?;
         if [ $$RESULT -eq 0 ]; then
-          touch /app/.models_lakehouse_ready;
+          touch /app/resources/airflow/.models_lakehouse_ready;
           echo 'Entrenamiento terminado correctamente.';
         else
           echo 'ERROR: el entrenamiento ha fallado.';

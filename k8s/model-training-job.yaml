@@ -1,0 +1,71 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: model-training
+  namespace: practica-ibdn
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: model-training
+    spec:
+      restartPolicy: Never
+      enableServiceLinks: false
+      containers:
+        - name: model-training
+          image: practica-spark:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MLFLOW_TRACKING_URI
+              value: http://mlflow:5000
+            - name: AWS_ACCESS_KEY_ID
+              value: admin
+            - name: AWS_SECRET_ACCESS_KEY
+              value: password123
+            - name: AWS_REGION
+              value: us-east-1
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              echo "Esperando MinIO, MLflow y Spark..."
+              
+              until curl -sf http://minio:9000/minio/health/live >/dev/null 2>&1; do
+                echo "Esperando MinIO..."
+                sleep 5
+              done
+
+              until curl -sf http://mlflow:5000 >/dev/null 2>&1; do
+                echo "Esperando MLflow..."
+                sleep 5
+              done
+
+              until curl -sf http://spark-master:8081 >/dev/null 2>&1; do
+                echo "Esperando Spark Master..."
+                sleep 5
+              done
+
+              echo "Importando datos de entrenamiento a Iceberg..."
+              /opt/spark/bin/spark-submit \
+                --master spark://spark-master:7077 \
+                --conf spark.driver.bindAddress=0.0.0.0 \
+                --conf spark.driver.host=$(hostname -i) \
+                --packages org.apache.iceberg:iceberg-spark-runtime-4.0_2.13:1.10.1,org.apache.hadoop:hadoop-aws:3.4.2 \
+                /app/resources/import_training_data_iceberg.py
+
+              echo "Entrenando modelo desde Iceberg y guardando en MinIO..."
+              /opt/spark/bin/spark-submit \
+                --master spark://spark-master:7077 \
+                --conf spark.driver.bindAddress=0.0.0.0 \
+                --conf spark.driver.host=$(hostname -i) \
+                --packages org.apache.iceberg:iceberg-spark-runtime-4.0_2.13:1.10.1,org.apache.hadoop:hadoop-aws:3.4.2 \
+                /app/resources/train_spark_mllib_model_lakehouse.py
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1"
+            limits:
+              memory: "4Gi"
+              cpu: "2"

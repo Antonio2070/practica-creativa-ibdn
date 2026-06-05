@@ -330,13 +330,25 @@ services:
       bash -c "
       airflow db migrate;
       airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@example.com --password admin || true;
-      airflow dags reserialize;
+      aairflow dags reserialize;
       airflow webserver --port 8080 --daemon;
-      sleep 20;
+
+      echo 'Esperando a que Airflow registre el DAG...';
+      for i in $$(seq 1 60); do
+        if airflow dags list | grep -q agile_data_science_batch_prediction_model_training; then
+          echo 'DAG registrado correctamente.';
+          break;
+        fi;
+        echo "Esperando DAG... $$i/60";
+        sleep 5;
+      done;
+
       airflow dags unpause agile_data_science_batch_prediction_model_training || true;
+
       if [ ! -f /app/.models_lakehouse_ready ]; then
         airflow dags trigger agile_data_science_batch_prediction_model_training || true;
       fi;
+
       airflow scheduler
       "
     networks:

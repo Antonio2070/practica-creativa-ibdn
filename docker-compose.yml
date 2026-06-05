@@ -330,7 +330,7 @@ services:
       bash -c "
       airflow db migrate;
       airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@example.com --password admin || true;
-      aairflow dags reserialize;
+      airflow dags reserialize;
       airflow webserver --port 8080 --daemon;
 
       echo 'Esperando a que Airflow registre el DAG...';
@@ -339,7 +339,7 @@ services:
           echo 'DAG registrado correctamente.';
           break;
         fi;
-        echo "Esperando DAG... $$i/60";
+        echo 'Esperando DAG... $$i/60';
         sleep 5;
       done;
 

@@ -43,27 +43,24 @@ kubectl wait --for=condition=complete job/minio-init -n "$NS" --timeout=300s
 
 echo ""
 echo "Inicializando Cassandra..."
+
 kubectl delete pod cassandra-init-manual -n "$NS" --ignore-not-found
+
 kubectl run cassandra-init-manual -n "$NS" \
-  --image=python:3.10-slim \
+  --image=practica-web:latest \
   --restart=Never \
-  -- sleep 3600
+  --image-pull-policy=IfNotPresent \
+  --command -- sh -c "python3 /app/resources/import_distances_cassandra.py"
 
-kubectl wait --for=condition=ready pod/cassandra-init-manual -n "$NS" --timeout=180s
+echo "Esperando a que cassandra-init termine..."
+kubectl wait --for=jsonpath='{.status.phase}'=Succeeded pod/cassandra-init-manual -n "$NS" --timeout=900s
 
-kubectl cp resources/import_distances_cassandra.py \
-  "$NS"/cassandra-init-manual:/tmp/import_distances_cassandra.py
-
-kubectl cp data/origin_dest_distances.jsonl \
-  "$NS"/cassandra-init-manual:/tmp/origin_dest_distances.jsonl
-
-kubectl exec -n "$NS" cassandra-init-manual -- sh -c "
-pip install cassandra-driver &&
-sed -i 's|/app/data/origin_dest_distances.jsonl|/tmp/origin_dest_distances.jsonl|' /tmp/import_distances_cassandra.py &&
-python /tmp/import_distances_cassandra.py
-"
+echo "Logs cassandra-init:"
+kubectl logs -n "$NS" pod/cassandra-init-manual --tail=80
 
 kubectl delete pod cassandra-init-manual -n "$NS" --ignore-not-found
+
+echo "Cassandra inicializada correctamente."
 
 echo ""
 echo "Creando topics Kafka..."

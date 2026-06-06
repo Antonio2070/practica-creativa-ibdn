@@ -75,8 +75,19 @@ with open(DATA_FILE, "r") as f:
         dest = record["Dest"]
         distance = float(record["Distance"])
 
-        session.execute(insert_stmt, (origin, dest, distance))
-        count += 1
+        try:
+            session.execute(insert_stmt, (origin, dest, distance))
+            count += 1
+
+            if count % 100 == 0:
+                print(f"Insertados {count}")
+
+        except Exception as e:
+            print(
+                f"ERROR en registro {count}: "
+                f"origin={origin}, dest={dest}, distance={distance}"
+            )
+            raise
 
 print(f"{count} distancias importadas correctamente en Cassandra")
 
